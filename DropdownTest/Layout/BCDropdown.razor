@@ -1,0 +1,172 @@
+﻿@using Microsoft.AspNetCore.Components
+@inject NavigationManager navManager
+@inject IJSRuntime jsRuntime;
+@typeparam TItem
+@typeparam TIdentity where TIdentity : IConvertible
+
+    @*
+        This is a combo box implemented with a Bootstrap dropdown
+        that supports generic types and filtering
+    *@
+
+
+@if (Items != null && ItemValue != null && ItemText != null)
+{
+    <div class="dropdown @DivClass" id="@ElementId">
+
+        <a class="@SelectClass" 
+           role="button"
+           tabindex="@SelectTabIndex"
+           data-bs-toggle="dropdown" aria-expanded="false"
+           id="dropdown-select"
+           @onclick="OnDropdownClick"
+           disabled="@(!Enabled)">
+
+            <span class="text-wrap"> @(SelectedItem != null ? ItemText.Invoke(SelectedItem) : Placeholder) </span>
+        </a>
+
+        <ul class="dropdown-menu w-100 bg-light-subtle shadow @ListClass" id="dropdown-list">
+
+            @* filter input *@
+            <li class="p-2 pb-1">
+                <input type="search" 
+                       id="dropdown-filter" 
+                       placeholder="@FilterPlaceholder"
+                       @bind="filter" @bind:event="oninput"
+                       autocomplete="off"
+                       class="form-control form-control-sm small" />
+            </li>
+
+            @* default option *@
+            <li class="ps-2">
+                <a class="dropdown-item text-muted" @onclick="() => OnItemClick(default)">
+                    @Placeholder
+                </a>
+            </li>
+
+            @* items *@
+            @foreach (var item in VisibleItems)
+            {
+                <li class="ps-2">
+                    <a class="dropdown-item" @onclick="() => OnItemClick(item)">
+                        @(ItemText.Invoke(item))
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+
+}
+
+<script>
+    var bcDropdown = {};
+
+    bcDropdown.onClick = (elemId) => {
+        // console.log('bcDropdown.onClick', elemId);
+
+        var select = document.getElementById(elemId).querySelector('a');
+        var list = document.getElementById(elemId).querySelector('ul');
+
+        //set onkeydown event
+        select.addEventListener("keydown", () => list.querySelector('input').focus());
+        
+        //reset list scroll
+        list.scrollTop = 0;
+    };
+
+</script>
+
+@code
+{
+    const int MAX_LENGTH = 22;
+    string filter = string.Empty;
+
+    // Properties
+
+    [Parameter, EditorRequired] public IEnumerable<TItem> Items { get; set; } = [];
+
+    [Parameter, EditorRequired] public Func<TItem, string>? ItemText { get; set; }
+
+    [Parameter, EditorRequired] public Func<TItem, TIdentity?>? ItemValue { get; set; }
+
+    //-- 2-way binding implementation
+
+    [Parameter] public TIdentity? Value { get; set; }
+
+    [Parameter] public EventCallback<TIdentity> ValueChanged { get; set; }
+
+
+    [Parameter] public bool Enabled { get; set; } = true;
+
+    [Parameter] public string Placeholder { get; set; } = "select...";
+
+    [Parameter] public string FilterPlaceholder { get; set; } = "search...";
+
+    [Parameter] public string ElementId { get; set; } = "dropdown";
+
+    [Parameter] public string DivClass { get; set; } = "";
+
+    [Parameter] public string SelectClass { get; set; } = "form-select";
+
+    [Parameter] public string ListClass { get; set; } = "";
+
+
+    [Parameter] public EventCallback<TItem?> ItemSelected { get; set; }
+
+
+    public TItem? SelectedItem => Value is null
+        ? default(TItem)
+        : Items!.SingleOrDefault(x => ItemValue!.Invoke(x)?.Equals(Value) == true);
+
+    private IEnumerable<TItem> VisibleItems => FilterItems(Items!);
+
+    //-- this allows focusing the element when disabled
+    private int? SelectTabIndex => this.Enabled ? 1 : null;
+
+
+    // Events
+
+    protected override void OnParametersSet()
+    {
+    }
+
+
+    async Task OnDropdownClick()
+    {
+        //reset filter
+        if (!string.IsNullOrWhiteSpace(filter))
+            this.filter = string.Empty;
+
+        //run script
+        await jsRuntime.InvokeVoidAsync("bcDropdown.onClick", this.ElementId);
+
+    }
+
+    async Task OnItemClick(TItem? item)
+    {
+        TIdentity? value = (item is null)
+            ? default
+            : ItemValue!.Invoke(item);
+
+        this.Value = value;
+        await ValueChanged.InvokeAsync(value);
+        await ItemSelected.InvokeAsync(item);
+    }
+
+
+    //Methods
+
+    public void ClearSelection() => Value = default;
+
+    IEnumerable<TItem> FilterItems(IEnumerable<TItem> list)
+    {
+        if (list == null || !list.Any())
+            return new TItem[0].AsEnumerable();
+
+        if (string.IsNullOrWhiteSpace(filter))
+            return list;
+
+        return list
+            .Where(x => ItemText!.Invoke(x)?.ContainsLike(filter) == true);
+    }
+}
