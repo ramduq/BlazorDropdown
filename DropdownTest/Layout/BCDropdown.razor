@@ -9,19 +9,18 @@
         that supports generic types and filtering
     *@
 
-
 @if (Items != null && ItemValue != null && ItemText != null)
 {
     <div class="dropdown @DivClass" id="@ElementId">
 
-        <a class="@SelectClass" 
+        <a class="btn @SelectClass dropdown-toggle"
            role="button"
            tabindex="@SelectTabIndex"
-           data-bs-toggle="dropdown" aria-expanded="false"
+           data-bs-toggle="dropdown"
+           aria-expanded="false"
            id="dropdown-select"
            @onclick="OnDropdownClick"
            disabled="@(!Enabled)">
-
             <span class="text-wrap"> @(SelectedItem != null ? ItemText.Invoke(SelectedItem) : Placeholder) </span>
         </a>
 
@@ -29,51 +28,100 @@
 
             @* filter input *@
             <li class="p-2 pb-1">
-                <input type="search" 
-                       id="dropdown-filter" 
-                       placeholder="@FilterPlaceholder"
-                       @bind="filter" @bind:event="oninput"
-                       autocomplete="off"
-                       class="form-control form-control-sm small" />
+                <a class="dropdown" id="input-container">
+                    <input type="search"
+                           id="dropdown-filter"
+                           placeholder="@FilterPlaceholder"
+                           @bind="filter" @bind:event="oninput"
+                           autocomplete="off"
+                           class="form-control form-control-sm small" />
+                </a>
             </li>
 
             @* default option *@
             <li class="ps-2">
-                <a class="dropdown-item text-muted" @onclick="() => OnItemClick(default)">
+                <a class="dropdown-item text-muted" id="item-0" href="" @onclick="() => OnItemClick(default)">
                     @Placeholder
                 </a>
             </li>
 
+            @{
+                int indexx = 1;
+            }
+
             @* items *@
             @foreach (var item in VisibleItems)
             {
+
                 <li class="ps-2">
-                    <a class="dropdown-item" @onclick="() => OnItemClick(item)">
+                    <a class="dropdown-item" id="item-@(indexx++)" href="" @onclick="() => OnItemClick(item)">
                         @(ItemText.Invoke(item))
                     </a>
                 </li>
             }
+
         </ul>
     </div>
-
 }
 
-<script>
-    var bcDropdown = {};
+<style>
+    .dropdown-toggle::after {
+        display: none;
+    }
+</style>
 
-    bcDropdown.onClick = (elemId) => {
-        // console.log('bcDropdown.onClick', elemId);
+<script>
+    window.bcDropdown = {}; // Define bcDropdown in the global object
+
+    window.bcDropdown.onClick = (elemId) => {
+        //console.log('bcDropdown.onClick', elemId);
 
         var select = document.getElementById(elemId).querySelector('a');
         var list = document.getElementById(elemId).querySelector('ul');
+        var inputContainer = document.getElementById('input-container');
+        var input = list.querySelector('input');
+        var firstListItem = list.querySelector('#item-1');
+        var itemZero = list.querySelector('#item-0');
 
-        //set onkeydown event
-        select.addEventListener("keydown", () => list.querySelector('input').focus());
-        
-        //reset list scroll
+        console.log(select);
+        //console.log(inputContainer)
+
+        // Focus the input when the dropdown is clicked
+       select.addEventListener("keydown", () => list.querySelector('input').focus());
+        console.log(select);
+
+        select.addEventListener('keydown', function (event) {
+            if (event.key == 'ArrowDown') {
+                console.log("Focus input. Keydown ArrowDown")
+                list.querySelector('input').focus();
+            }
+        });
+        console.log(select);
+
+       input.addEventListener('keydown', function(event) {
+              if (event.key == 'ArrowDown') {
+                //console.log("Focus item-0. Keydown ArrowDown")
+                itemZero.focus();
+              }
+        });
+
+        itemZero.addEventListener('keyup', function(event) {
+              if (event.key == 'ArrowUp') {
+                //console.log("Focus input. Keydown ArrowUp")
+                list.querySelector('input').focus();
+              }
+        });
         list.scrollTop = 0;
-    };
 
+        //****Select focus and print in console ******
+        // let focusedElement = null;
+        // function updateFocusedElement() {
+        //     focusedElement = document.activeElement;
+        //     console.log('Elemento con foco:', focusedElement);
+        // }
+        // document.addEventListener('focus', updateFocusedElement, true);
+
+    };
 </script>
 
 @code
@@ -110,9 +158,7 @@
 
     [Parameter] public string ListClass { get; set; } = "";
 
-
     [Parameter] public EventCallback<TItem?> ItemSelected { get; set; }
-
 
     public TItem? SelectedItem => Value is null
         ? default(TItem)
@@ -125,11 +171,9 @@
 
 
     // Events
-
     protected override void OnParametersSet()
     {
     }
-
 
     async Task OnDropdownClick()
     {
@@ -139,7 +183,6 @@
 
         //run script
         await jsRuntime.InvokeVoidAsync("bcDropdown.onClick", this.ElementId);
-
     }
 
     async Task OnItemClick(TItem? item)
@@ -153,9 +196,7 @@
         await ItemSelected.InvokeAsync(item);
     }
 
-
     //Methods
-
     public void ClearSelection() => Value = default;
 
     IEnumerable<TItem> FilterItems(IEnumerable<TItem> list)
@@ -169,4 +210,5 @@
         return list
             .Where(x => ItemText!.Invoke(x)?.ContainsLike(filter) == true);
     }
+
 }
