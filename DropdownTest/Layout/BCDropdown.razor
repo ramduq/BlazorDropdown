@@ -13,7 +13,7 @@
 {
     <div class="dropdown @DivClass" id="@ElementId">
 
-        <a class="btn @SelectClass"
+        <a class="@SelectClass"
            role="button"
            tabindex="@SelectTabIndex"
            data-bs-toggle="dropdown"
@@ -67,31 +67,39 @@
     window.bcDropdown.onClick = (elemId) => {
         //console.log('bcDropdown.onClick', elemId);
 
-        var select = document.getElementById(elemId).querySelector('a');
-        var list = document.getElementById(elemId).querySelector('ul');
+        var container = document.getElementById(elemId);
+        var select = container.querySelector('a');
+        var list = container.querySelector('ul');
         var inputContainer = document.getElementById('input-container');
         var input = list.querySelector('input');
         var itemZero = list.querySelector('#item-0');
 
-        //console.log(select);
-        //console.log(inputContainer)
+        //scroll list to top 
+        list.scrollTop = 0;
 
-        // Focus the input when the dropdown is clicked
-       select.addEventListener("keydown", () => list.querySelector('input').focus());
+        // Focus the input when the a alphanumeric key is pressed 
+        list.addEventListener('keydown', function (event) {
+            const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
+            const isInputFocused = (document.activeElement === input);
 
-       //not working
-            // select.addEventListener('keydown', function (event) {
-            //     if (event.key == 'ArrowDown') {
-            //         console.log("Focus input. Keydown ArrowDown")
-            //         list.querySelector('input').focus();
-            //     }
-            // });        
+            console.log('key', event.key);
+            console.log('isLetterOrNumber', isLetterOrNumber);
+            console.log('isInputFocused', isInputFocused);
 
-       input.addEventListener('keydown', function(event) {
-              if (event.key == 'ArrowDown') {
-                //console.log("Focus item-0. Keydown ArrowDown")
+            if (isLetterOrNumber && !isInputFocused) {
+                input.focus();
+                event.preventDefault();
+            }
+        });
+
+        //move focus from input to first option, when ArrowDown is pressed 
+        input.addEventListener('keydown', function(event) {
+            if (event.key == 'ArrowDown') {
                 itemZero.focus();
-              }
+            }
+            if (event.key == 'ArrowUp') {
+                select.focus();
+            }
         });
 
         itemZero.addEventListener('keyup', function(event) {
