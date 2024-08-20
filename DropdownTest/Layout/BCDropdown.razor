@@ -13,7 +13,7 @@
 {
     <div class="dropdown @DivClass" id="@ElementId">
 
-        <a class="btn @SelectClass dropdown-toggle"
+        <a class="btn @SelectClass"
            role="button"
            tabindex="@SelectTabIndex"
            data-bs-toggle="dropdown"
@@ -45,16 +45,11 @@
                 </a>
             </li>
 
-            @{
-                int indexx = 1;
-            }
-
             @* items *@
             @foreach (var item in VisibleItems)
             {
-
                 <li class="ps-2">
-                    <a class="dropdown-item" id="item-@(indexx++)" href="" @onclick="() => OnItemClick(item)">
+                    <a class="dropdown-item" href="" @onclick="() => OnItemClick(item)">
                         @(ItemText.Invoke(item))
                     </a>
                 </li>
@@ -64,11 +59,7 @@
     </div>
 }
 
-<style>
-    .dropdown-toggle::after {
-        display: none;
-    }
-</style>
+
 
 <script>
     window.bcDropdown = {}; // Define bcDropdown in the global object
@@ -80,23 +71,21 @@
         var list = document.getElementById(elemId).querySelector('ul');
         var inputContainer = document.getElementById('input-container');
         var input = list.querySelector('input');
-        var firstListItem = list.querySelector('#item-1');
         var itemZero = list.querySelector('#item-0');
 
-        console.log(select);
+        //console.log(select);
         //console.log(inputContainer)
 
         // Focus the input when the dropdown is clicked
        select.addEventListener("keydown", () => list.querySelector('input').focus());
-        console.log(select);
 
-        select.addEventListener('keydown', function (event) {
-            if (event.key == 'ArrowDown') {
-                console.log("Focus input. Keydown ArrowDown")
-                list.querySelector('input').focus();
-            }
-        });
-        console.log(select);
+       //not working
+            // select.addEventListener('keydown', function (event) {
+            //     if (event.key == 'ArrowDown') {
+            //         console.log("Focus input. Keydown ArrowDown")
+            //         list.querySelector('input').focus();
+            //     }
+            // });        
 
        input.addEventListener('keydown', function(event) {
               if (event.key == 'ArrowDown') {
@@ -111,7 +100,6 @@
                 list.querySelector('input').focus();
               }
         });
-        list.scrollTop = 0;
 
         //****Select focus and print in console ******
         // let focusedElement = null;
