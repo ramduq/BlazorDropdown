@@ -41,7 +41,7 @@
 
             @* default option *@
             <li class="ps-2">
-                <a class="dropdown-item text-muted" id="item-0" href="" @onclick="() => OnItemClick(default)">
+                <a class="dropdown-item text-muted" id="item-0" href="javascript:;" @onclick="() => OnItemClick(default)">
                     @Placeholder
                 </a>
             </li>
@@ -50,7 +50,7 @@
             @foreach (var item in VisibleItems)
             {
                 <li class="ps-2">
-                    <a class="dropdown-item" href="" @onclick="() => OnItemClick(item)">
+                    <a class="dropdown-item" href="javascript:;" @onclick="() => OnItemClick(item)">
                         @(ItemText.Invoke(item))
                     </a>
                 </li>
