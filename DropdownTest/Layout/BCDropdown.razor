@@ -60,8 +60,6 @@
     </div>
 }
 
-
-
 <script>
     var bcDropdown = {}; // Define bcDropdown object    
     var selection = null;
@@ -81,20 +79,6 @@
 
         idElement = elemId;       
     };
-
-    // bcDropdown.focusSearchOnAlphanumericKey = (event, input) => {
-    //     const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
-    //     const isInputFocused = (document.activeElement === input);
-
-    //     console.log('key', event.key);
-    //     console.log('isLetterOrNumber', isLetterOrNumber);
-    //     console.log('isInputFocused', isInputFocused);
-
-    //     if (isLetterOrNumber && !isInputFocused) {
-    //         input.focus();
-    //         event.preventDefault();
-    //     }
-    // };
     
     function focusSearchOnAlphanumericKey(event, input) {
         const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
@@ -154,7 +138,8 @@
             //     console.log('is close')
             // })
 
-            // Focus the input when the a alphanumeric key is pressed
+
+        // Focus the input when the a alphanumeric key is pressed
             list.addEventListener('keydown', function (event) {
                 focusSearchOnAlphanumericKey(event, input);
             });
