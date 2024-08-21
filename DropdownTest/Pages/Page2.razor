@@ -26,6 +26,8 @@
                 
         </BCDropdown2>
 
+
+
         <br />
 
         <p> 
@@ -41,10 +43,30 @@
             <input class="form-check-input" type="checkbox" @bind="enabled1" id="chk1">
             <label class="form-check-label" for="chk1"> Enabled </label>
         </div>
-
     </div>
 
-    <div class="card card-body col-md-6 my-3">
+    <div class="card card-body col-md-6 my-3 border-info">
+        <BCDropdown2 ElementId="dropdown2"
+                     Items="data"
+                     TItem="SimpleRecord" TIdentity="string"
+                     ItemValue="@(x => x.Code)"
+                     ItemText="@(x => $"{x.Code} - {x.Name}")"
+                     @bind-Value="@selectedValue2"
+                     ItemSelected="OnItemSelected2"
+                     Enabled="@enabled1">
+
+            <ItemTemplate Context="x">
+
+                <span class="badge bg-danger mx-2"> @x.Name </span>
+
+            </ItemTemplate>
+
+        </BCDropdown2>
+    </div>
+
+
+
+    <div class="card card-body col-md-6 my-3 bg-danger">
         <h6> Select </h6>
         <select class="form-select">
             @foreach (var item in data)
@@ -58,13 +80,19 @@
 
 </div>
 
+<br/>
+<br/>
+
 
 @code {
     const string PageTitle = "Dropdown with template";
 
     string? selectedValue = "0633";
+    string? selectedValue2 = "0006";
+
     bool enabled1 = true;
     SimpleRecord? selectedItem;
+    SimpleRecord? selectedItem2;
 
     List<SimpleRecord> data = new();
 
@@ -77,6 +105,8 @@
     }
 
     void OnItemSelected(SimpleRecord? item) => selectedItem = item;
+
+    void OnItemSelected2(SimpleRecord? item) => selectedItem2 = item;
 
 
     // Methods

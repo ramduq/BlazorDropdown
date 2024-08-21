@@ -79,50 +79,48 @@
 
 <script>
     var bcDropdown = {};
-    
+
     bcDropdown.initialize = (elemId) => {
         console.log('initialize', elemId);
 
-        var element = document.getElementById(elemId);
-        var select = element.querySelector('#dropdown-select');
-        var list = element.querySelector('ul');
-        var searchContainer = element.querySelector('#search-box');
-        var input = element.querySelector('#search-box > input');
-        var item0 = element.querySelector('#item-0');
-        var item1 = element.querySelector('#item-1');
-        var listItems = element.querySelectorAll('a.dropdown-item');
+        const element = document.getElementById(elemId);
+        const select = element.querySelector('#dropdown-select');
+        const list = element.querySelector('ul');
+        const searchContainer = element.querySelector('#search-box');
+        const input = element.querySelector('#search-box > input');
+        const item0 = element.querySelector('#item-0');
 
         // console.log('element', element);
         // console.log('select', select);
         // console.log('list', list);
         // console.log('input', input);
         // console.log('item0', item0);
-        // console.log('item1', item1);
 
         //bootstrap dropdown object
         bootstrapComp = new bootstrap.Dropdown(element);
                 
         //set dropdown-expand event
-        element.addEventListener("show.bs.dropdown", () => {
-            console.log('on show.bs.dropdown');
-            input.scrollIntoView();//not working
-            list.scrollTop = 0;//not working
+        element.addEventListener("shown.bs.dropdown", () => {
+            //console.log('on shown.bs.dropdown');
+            input.scrollIntoView(); 
+            list.scrollTop = 0; 
         })
 
         //focus search box on alphanumeric key 
         list.addEventListener('keydown', (event) => {
             if (document.activeElement != input && /^[a-zA-Z0-9]$/.test(event.key)) {
-                console.log('on select ArrowDown');
+                // console.log('on select ArrowDown');
                 //focus search
                 input.focus();
             }
         });
         select.addEventListener('keydown', (event) => {
             if (/^[a-zA-Z0-9]$/.test(event.key)) {
-                console.log('on select alphanumeric keydown ');
+                // console.log('on select alphanumeric keydown ');
                 //expand if not expanded
                 if (!list.checkVisibility()) {
-                    bootstrapComp.show();
+                    list.classList.add("show");
+                    //bootstrapComp.show();
                 }
                 //focus search
                 input.focus();
@@ -132,7 +130,7 @@
         //set arrow navigation: select -> input -> item0 -> item 1 ...
 
         select.addEventListener('keyup', (event) => {
-            console.log('on select keyup:', event.key);
+            // console.log('on select keyup:', event.key);
             if (event.key == 'ArrowDown') {
                 input.focus();
             }
@@ -140,20 +138,28 @@
 
         input.addEventListener('keyup', (event) => {
             if (event.key == 'ArrowUp') {
-                console.log('on input ArrowUp');
+                // console.log('on input ArrowUp');
                 select.focus();
             } else if (event.key == 'ArrowDown') {
-                console.log('on input ArrowDown');
+                // console.log('on input ArrowDown');
                 item0.focus();
             }
         });
 
         item0.addEventListener('keyup', (event) => {
             if (event.key == 'ArrowUp') {
-                console.log('on item0 ArrowUp keypress');
+                // console.log('on item0 ArrowUp keypress');
                 input.focus();
             } 
         });
+    };
+
+    bcDropdown.collapse = (elemId) => {
+        const element = document.getElementById(elemId);
+        const list = element.querySelector('ul');
+        //const bootstrapComp = new bootstrap.Dropdown(element);
+        //bootstrapComp.hide();
+        list.classList.remove('show');
     };
 
 </script>
@@ -238,6 +244,13 @@
         this.Value = value;
         await ValueChanged.InvokeAsync(value);
         await ItemSelected.InvokeAsync(item);
+
+        /*
+            Normally this would not be required. However, after the dropdown has been expanded programmatically, 
+            it no longer closes after selection. Looks like a bootstrap bug.
+            Workaround: collapse manually:
+         */
+        await jsRuntime.InvokeVoidAsync("bcDropdown.collapse", this.ElementId);
     }
 
 
