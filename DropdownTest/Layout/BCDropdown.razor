@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components
+﻿﻿@using Microsoft.AspNetCore.Components
 @inject NavigationManager navManager
 @inject IJSRuntime jsRuntime;
 @typeparam TItem
@@ -11,6 +11,7 @@
 
 @if (Items != null && ItemValue != null && ItemText != null)
 {
+    <input type="hidden" id="hdnElementId" value="@(ElementId)">
     <div class="dropdown @DivClass" id="@ElementId">
 
         <a class="@SelectClass"
@@ -59,13 +60,43 @@
     </div>
 }
 
-
-
 <script>
-    window.bcDropdown = {}; // Define bcDropdown in the global object
+    var bcDropdown = {}; // Define bcDropdown object
+    var selection = null;
+    var idElement = null;
 
-    window.bcDropdown.onClick = (elemId) => {
-        //console.log('bcDropdown.onClick', elemId);
+    bcDropdown.initialize = (elemId) => {
+        console.log('Initialize');
+
+        var dropdown = document.getElementById(elemId);
+
+        var container = document.getElementById(elemId);
+        selection = container.querySelector('a');
+
+        dropdown.addEventListener('show.bs.dropdown', function () {
+            arrowsDropdown(elemId);
+        });
+
+
+        idElement = elemId;
+    };
+
+    function focusSearchOnAlphanumericKey(event, input) {
+        const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
+        const isInputFocused = (document.activeElement === input);
+
+        console.log('key', event.key);
+        console.log('isLetterOrNumber', isLetterOrNumber);
+        console.log('isInputFocused', isInputFocused);
+
+        if (isLetterOrNumber && !isInputFocused) {
+            input.focus();
+            event.preventDefault();
+        }
+    }
+
+    function arrowsDropdown(elemId) {
+        console.log('arrowsDropdown', elemId);
 
         var container = document.getElementById(elemId);
         var select = container.querySelector('a');
@@ -73,51 +104,85 @@
         var inputContainer = document.getElementById('input-container');
         var input = list.querySelector('input');
         var itemZero = list.querySelector('#item-0');
+        var tce = new bootstrap.Dropdown(document.getElementById('dropdown1'));
+        //tce.toggle()
+        //tce.show()
+        //tce.hiden()
 
-        //scroll list to top 
+        //scroll list to top
         list.scrollTop = 0;
 
-        // Focus the input when the a alphanumeric key is pressed 
+        //is dropdown open?
+        const isDropdownOpen = () => {
+            return select.classList.contains('show');
+        };
+        const isOpen = isDropdownOpen();
+        console.log('Is the dropdown open?', isOpen ? 'Yes' : 'No');
+        if (!isOpen) {
+            select.addEventListener('keydown', function (event) {
+                const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
+                if (isLetterOrNumber) {
+                    tce.show();
+                    console.log("se abrio ")
+                }
+                focusSearchOnAlphanumericKey(event, input);
+            });
+        }
+
+        //expand/open
+        // select.addEventListener('show.bs.dropdown', function () {
+        //     console.log('is open')
+        // })
+
+        // //hide/close
+        // select.addEventListener('hide.bs.dropdown', function () {
+        //     console.log('is close')
+        // })
+
+
+        // Focus the input when the a alphanumeric key is pressed
         list.addEventListener('keydown', function (event) {
-            const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
-            const isInputFocused = (document.activeElement === input);
-
-            console.log('key', event.key);
-            console.log('isLetterOrNumber', isLetterOrNumber);
-            console.log('isInputFocused', isInputFocused);
-
-            if (isLetterOrNumber && !isInputFocused) {
-                input.focus();
-                event.preventDefault();
-            }
+            focusSearchOnAlphanumericKey(event, input);
         });
 
-        //move focus from input to first option, when ArrowDown is pressed 
-        input.addEventListener('keydown', function(event) {
+
+        select.addEventListener('keydown', function (event) {
+            focusSearchOnAlphanumericKey(event, input);
+        });
+
+        //move focus from input to first option, when ArrowDown is pressed
+        input.addEventListener('keydown', function (event) {
             if (event.key == 'ArrowDown') {
                 itemZero.focus();
+                list.scrollTop = 0;
             }
             if (event.key == 'ArrowUp') {
                 select.focus();
             }
         });
 
-        itemZero.addEventListener('keyup', function(event) {
-              if (event.key == 'ArrowUp') {
+        itemZero.addEventListener('keyup', function (event) {
+            if (event.key == 'ArrowUp') {
                 //console.log("Focus input. Keydown ArrowUp")
                 list.querySelector('input').focus();
-              }
+            }
         });
 
-        //****Select focus and print in console ******
-        // let focusedElement = null;
-        // function updateFocusedElement() {
-        //     focusedElement = document.activeElement;
-        //     console.log('Elemento con foco:', focusedElement);
-        // }
-        // document.addEventListener('focus', updateFocusedElement, true);
-
     };
+
+    //****Select focus and print in console ******
+    let focusedElement = null;
+    function updateFocusedElement() {
+        focusedElement = document.activeElement;
+        //console.log('Element with focus:', focusedElement);
+
+        if (focusedElement === selection) {
+            console.log('the elemenst they are the same');
+            arrowsDropdown(idElement);
+        }
+    }
+    document.addEventListener('focus', updateFocusedElement, true);
+
 </script>
 
 @code
@@ -170,6 +235,12 @@
     protected override void OnParametersSet()
     {
     }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await jsRuntime.InvokeVoidAsync("bcDropdown.initialize", this.ElementId);
+    }
+
 
     async Task OnDropdownClick()
     {
@@ -178,7 +249,7 @@
             this.filter = string.Empty;
 
         //run script
-        await jsRuntime.InvokeVoidAsync("bcDropdown.onClick", this.ElementId);
+        //await jsRuntime.InvokeVoidAsync("initialize", this.ElementId);
     }
 
     async Task OnItemClick(TItem? item)
