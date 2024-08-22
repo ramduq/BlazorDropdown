@@ -26,6 +26,7 @@ namespace DropdownUnitTest
             // Add more
         };
 
+
             var componentParameters = new ComponentParameter[]
             {
         ComponentParameter.CreateParameter(nameof(BCDropdown<MyItem, int>.Items), items),
