@@ -1,166 +1,187 @@
-﻿@using Microsoft.AspNetCore.Components
+﻿﻿@using Microsoft.AspNetCore.Components
 @inject NavigationManager navManager
 @inject IJSRuntime jsRuntime;
 @typeparam TItem
-@typeparam TIdentity where TIdentity : IConvertible, IEquatable<TIdentity>
+@typeparam TIdentity where TIdentity : IConvertible
 
     @*
         This is a combo box implemented with a Bootstrap dropdown
         that supports generic types and filtering
     *@
 
-
 @if (Items != null && ItemValue != null && ItemText != null)
 {
+    <input type="hidden" id="hdnElementId" value="@(ElementId)">
     <div class="dropdown @DivClass" id="@ElementId">
 
         <a class="@SelectClass"
            role="button"
            tabindex="@SelectTabIndex"
-           data-bs-toggle="dropdown" aria-expanded="false"
+           data-bs-toggle="dropdown"
+           aria-expanded="false"
            id="dropdown-select"
            @onclick="OnDropdownClick"
            disabled="@(!Enabled)">
-
             <span class="text-wrap"> @(SelectedItem != null ? ItemText.Invoke(SelectedItem) : Placeholder) </span>
         </a>
 
         <ul class="dropdown-menu w-100 bg-light-subtle shadow @ListClass" id="dropdown-list">
 
             @* filter input *@
-            <li class="">
-                <a class="dropdown-item" id="search-box">
+            <li class="p-2 pb-1">
+                <a class="dropdown" id="input-container">
                     <input type="search"
                            id="dropdown-filter"
                            placeholder="@FilterPlaceholder"
                            @bind="filter" @bind:event="oninput"
                            autocomplete="off"
-                           tabindex="0"
-                           class="form-control form-control-sm border-secondary small" />
+                           class="form-control form-control-sm small" />
                 </a>
             </li>
 
             @* default option *@
-            @* An href value is needed to be accesible via keyboard *@
-
-            <li>
-                <a class="dropdown-item text-muted small" @onclick="() => OnItemClick(default)" id="item-0" href="javascript:;">
-                    @NoValueItemText &nbsp;
+            <li class="ps-2">
+                <a class="dropdown-item text-muted" id="item-0" href="" @onclick="() => OnItemClick(default)">
+                    @Placeholder
                 </a>
             </li>
 
             @* items *@
-            @{
-                int index = 0;
-            }
             @foreach (var item in VisibleItems)
             {
-                index++;   
-                <li @onclick="() => OnItemClick(item)" 
-                    class="@(@ItemValue.Invoke(item)?.Equals(Value) == true ? "active" : "")">
-
-                    <a class="dropdown-item py-0" href="javascript:;" id="item-@(index)">  
-                        @if (ItemTemplate != null)
-                        {
-                            @* custom markup: *@
-                            @ItemTemplate(item)
-                        }
-                        else
-                        {
-                            <span class="my-1"> @ItemText.Invoke(item) </span>
-                        }
+                <li class="ps-2">
+                    <a class="dropdown-item" href="" @onclick="() => OnItemClick(item)">
+                        @(ItemText.Invoke(item))
                     </a>
                 </li>
             }
+
         </ul>
     </div>
-
 }
 
 <script>
-    var bcDropdown = {};
+    var bcDropdown = {}; // Define bcDropdown object
+    var selection = null;
+    var idElement = null;
 
     bcDropdown.initialize = (elemId) => {
-        console.log('initialize', elemId);
+        console.log('Initialize');
 
-        const element = document.getElementById(elemId);
-        const select = element.querySelector('#dropdown-select');
-        const list = element.querySelector('ul');
-        const searchContainer = element.querySelector('#search-box');
-        const input = element.querySelector('#search-box > input');
-        const item0 = element.querySelector('#item-0');
+        var dropdown = document.getElementById(elemId);
 
-        // console.log('element', element);
-        // console.log('select', select);
-        // console.log('list', list);
-        // console.log('input', input);
-        // console.log('item0', item0);
+        var container = document.getElementById(elemId);
+        selection = container.querySelector('a');
 
-        //bootstrap dropdown object
-        bootstrapComp = new bootstrap.Dropdown(element);
-                
-        //set dropdown-expand event
-        element.addEventListener("shown.bs.dropdown", () => {
-            //console.log('on shown.bs.dropdown');
-            input.scrollIntoView(); 
-            list.scrollTop = 0; 
-        })
-
-        //focus search box on alphanumeric key 
-        list.addEventListener('keydown', (event) => {
-            if (document.activeElement != input && /^[a-zA-Z0-9]$/.test(event.key)) {
-                // console.log('on select ArrowDown');
-                //focus search
-                input.focus();
-            }
+        dropdown.addEventListener('show.bs.dropdown', function () {
+            arrowsDropdown(elemId);
         });
-        select.addEventListener('keydown', (event) => {
-            if (/^[a-zA-Z0-9]$/.test(event.key)) {
-                // console.log('on select alphanumeric keydown ');
-                //expand if not expanded
-                if (!list.checkVisibility()) {
-                    list.classList.add("show");
-                    //bootstrapComp.show();
+
+
+        idElement = elemId;
+    };
+
+    function focusSearchOnAlphanumericKey(event, input) {
+        const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
+        const isInputFocused = (document.activeElement === input);
+
+        console.log('key', event.key);
+        console.log('isLetterOrNumber', isLetterOrNumber);
+        console.log('isInputFocused', isInputFocused);
+
+        if (isLetterOrNumber && !isInputFocused) {
+            input.focus();
+            event.preventDefault();
+        }
+    }
+
+    function arrowsDropdown(elemId) {
+        console.log('arrowsDropdown', elemId);
+
+        var container = document.getElementById(elemId);
+        var select = container.querySelector('a');
+        var list = container.querySelector('ul');
+        var inputContainer = document.getElementById('input-container');
+        var input = list.querySelector('input');
+        var itemZero = list.querySelector('#item-0');
+        var tce = new bootstrap.Dropdown(document.getElementById('dropdown1'));
+        //tce.toggle()
+        //tce.show()
+        //tce.hiden()
+
+        //scroll list to top
+        list.scrollTop = 0;
+
+        //is dropdown open?
+        const isDropdownOpen = () => {
+            return select.classList.contains('show');
+        };
+        const isOpen = isDropdownOpen();
+        console.log('Is the dropdown open?', isOpen ? 'Yes' : 'No');
+        if (!isOpen) {
+            select.addEventListener('keydown', function (event) {
+                const isLetterOrNumber = /^[a-zA-Z0-9]$/.test(event.key);
+                if (isLetterOrNumber) {
+                    tce.show();
+                    console.log("se abrio ")
                 }
-                //focus search
-                input.focus();
-            }
+                focusSearchOnAlphanumericKey(event, input);
+            });
+        }
+
+        //expand/open
+        // select.addEventListener('show.bs.dropdown', function () {
+        //     console.log('is open')
+        // })
+
+        // //hide/close
+        // select.addEventListener('hide.bs.dropdown', function () {
+        //     console.log('is close')
+        // })
+
+
+        // Focus the input when the a alphanumeric key is pressed
+        list.addEventListener('keydown', function (event) {
+            focusSearchOnAlphanumericKey(event, input);
         });
 
-        //set arrow navigation: select -> input -> item0 -> item 1 ...
 
-        select.addEventListener('keyup', (event) => {
-            // console.log('on select keyup:', event.key);
+        select.addEventListener('keydown', function (event) {
+            focusSearchOnAlphanumericKey(event, input);
+        });
+
+        //move focus from input to first option, when ArrowDown is pressed
+        input.addEventListener('keydown', function (event) {
             if (event.key == 'ArrowDown') {
-                input.focus();
+                itemZero.focus();
+                list.scrollTop = 0;
             }
-        });
-
-        input.addEventListener('keyup', (event) => {
             if (event.key == 'ArrowUp') {
-                // console.log('on input ArrowUp');
                 select.focus();
-            } else if (event.key == 'ArrowDown') {
-                // console.log('on input ArrowDown');
-                item0.focus();
             }
         });
 
-        item0.addEventListener('keyup', (event) => {
+        itemZero.addEventListener('keyup', function (event) {
             if (event.key == 'ArrowUp') {
-                // console.log('on item0 ArrowUp keypress');
-                input.focus();
-            } 
+                //console.log("Focus input. Keydown ArrowUp")
+                list.querySelector('input').focus();
+            }
         });
+
     };
 
-    bcDropdown.collapse = (elemId) => {
-        const element = document.getElementById(elemId);
-        const list = element.querySelector('ul');
-        //const bootstrapComp = new bootstrap.Dropdown(element);
-        //bootstrapComp.hide();
-        list.classList.remove('show');
-    };
+    //****Select focus and print in console ******
+    let focusedElement = null;
+    function updateFocusedElement() {
+        focusedElement = document.activeElement;
+        //console.log('Element with focus:', focusedElement);
+
+        if (focusedElement === selection) {
+            console.log('the elemenst they are the same');
+            arrowsDropdown(idElement);
+        }
+    }
+    document.addEventListener('focus', updateFocusedElement, true);
 
 </script>
 
@@ -173,14 +194,9 @@
 
     [Parameter, EditorRequired] public IEnumerable<TItem> Items { get; set; } = [];
 
-    [Parameter, EditorRequired] public Func<TItem, TIdentity?> ItemValue { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, string>? ItemText { get; set; }
 
-    [Parameter, EditorRequired] public Func<TItem, string> ItemText { get; set; } = default!;
-
-    [Parameter] public Func<IEnumerable<TItem>, string, IEnumerable<TItem>>? FilterFunction { get; set; } 
-
-    [Parameter] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
-
+    [Parameter, EditorRequired] public Func<TItem, TIdentity?>? ItemValue { get; set; }
 
     //-- 2-way binding implementation
 
@@ -191,13 +207,11 @@
 
     [Parameter] public bool Enabled { get; set; } = true;
 
-    [Parameter] public string Placeholder { get; set; } = "Select...";
-
-    [Parameter] public string NoValueItemText { get; set; } = "(No selection)";
+    [Parameter] public string Placeholder { get; set; } = "select...";
 
     [Parameter] public string FilterPlaceholder { get; set; } = "search...";
 
-    [Parameter, EditorRequired] public string ElementId { get; set; } = default!;
+    [Parameter] public string ElementId { get; set; } = "dropdown";
 
     [Parameter] public string DivClass { get; set; } = "";
 
@@ -205,34 +219,37 @@
 
     [Parameter] public string ListClass { get; set; } = "";
 
-
     [Parameter] public EventCallback<TItem?> ItemSelected { get; set; }
-
 
     public TItem? SelectedItem => Value is null
         ? default(TItem)
         : Items!.SingleOrDefault(x => ItemValue!.Invoke(x)?.Equals(Value) == true);
 
-    private IEnumerable<TItem> VisibleItems => Filter(Items!);
+    private IEnumerable<TItem> VisibleItems => FilterItems(Items!);
 
     //-- this allows focusing the element when disabled
-    private int? SelectTabIndex => this.Enabled ? 0 : null;
+    private int? SelectTabIndex => this.Enabled ? 1 : null;
 
 
     // Events
-
-    protected override async Task OnAfterRenderAsync(bool isFirstRender)
+    protected override void OnParametersSet()
     {
-        //run script
-        if (isFirstRender)
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
             await jsRuntime.InvokeVoidAsync("bcDropdown.initialize", this.ElementId);
     }
 
 
-    async void OnDropdownClick()
+    async Task OnDropdownClick()
     {
         //reset filter
-        this.filter = string.Empty;
+        if (!string.IsNullOrWhiteSpace(filter))
+            this.filter = string.Empty;
+
+        //run script
+        //await jsRuntime.InvokeVoidAsync("initialize", this.ElementId);
     }
 
     async Task OnItemClick(TItem? item)
@@ -244,30 +261,13 @@
         this.Value = value;
         await ValueChanged.InvokeAsync(value);
         await ItemSelected.InvokeAsync(item);
-
-        /*
-            Normally this would not be required. However, after the dropdown has been expanded programmatically, 
-            it no longer closes after selection. Looks like a bootstrap bug.
-            Workaround: collapse manually:
-         */
-        await jsRuntime.InvokeVoidAsync("bcDropdown.collapse", this.ElementId);
     }
 
-
     //Methods
-
     public void ClearSelection() => Value = default;
 
-    IEnumerable<TItem> Filter(IEnumerable<TItem> list)
+    IEnumerable<TItem> FilterItems(IEnumerable<TItem> list)
     {
-        //If custom function provided, invoke it
-        if (FilterFunction != null)
-        {
-            return FilterFunction.Invoke(list, filter);
-        }
-
-        //Otherwise filter by ItemText
-        //
         if (list == null || !list.Any())
             return new TItem[0].AsEnumerable();
 
@@ -275,6 +275,7 @@
             return list;
 
         return list
-            .Where(x => ItemText.Invoke(x)?.ContainsLike(filter) == true);
+            .Where(x => ItemText!.Invoke(x)?.ContainsLike(filter) == true);
     }
+
 }
